@@ -15,7 +15,7 @@
 #include "TMath.h"
 using namespace RooFit;
 
-void Pull_From_GitHub()
+void D_M__Delta_M_Fits()
 {
 
 //****************************************************
