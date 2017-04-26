@@ -447,8 +447,9 @@ for(i_flavour_iterate=0; i_flavour_iterate < 2; i_flavour_iterate++)
    // Find the bin centres
     std::vector<double>::iterator bin_iterate;    
     unsigned int i_bin_iterate=1;
+    i_bin_iterate=1;
     // Find the bin centres (why?) 
-    for(bin_iterate=bin_edges.begin(); i_bin_iterate <= bin_edges.size(); bin_iterate++,i_bin_iterate++)
+    for(bin_iterate=bin_edges.begin(); i_bin_iterate < bin_edges.size(); bin_iterate++,i_bin_iterate++)
       {
        std::stringstream betL_s;    //What are betL_s and betR_s? temp bin edges?
        betL_s<<bin_edges[i_bin_iterate-1];
@@ -469,6 +470,7 @@ for(i_flavour_iterate=0; i_flavour_iterate < 2; i_flavour_iterate++)
       //For D0_TAU Plot
        //entries_per_bin.push_back(tmpDataSet->sumEntries());
  cout<<"i_bin_iterate ="<<i_bin_iterate<<endl;
+cout<<"bin_centres[i_bin_iterate] ="<<bin_centres[i_bin_iterate]<<endl;
 
 
      } //end find bin centres
@@ -478,14 +480,14 @@ for(i_flavour_iterate=0; i_flavour_iterate < 2; i_flavour_iterate++)
 
       // Fit data for each bin and save plots
       std::vector<double>::iterator fit_iterate;
-      unsigned int i_fit_iterate=0;
+      unsigned int i_fit_iterate=1;
       for(fit_iterate=bin_edges.begin(); i_fit_iterate<bin_edges_size; fit_iterate++, i_fit_iterate++)
           {
 std::cout<<"i_fit_iterate = "<<i_fit_iterate<<" and bin_edges_size ="<<bin_edges_size<<endl;
 
                 std::cout<<"test 1"<<endl;
 
-		RooDataSet* tmpDataSet=(RooDataSet*) (dataInBin[i_fit_iterate]);
+		RooDataSet* tmpDataSet=(RooDataSet*) (dataInBin[i_fit_iterate-1]);
                 std::cout<<"dataset size = "<<tmpDataSet->sumEntries()<<endl;
                 std::cout<<"test 2"<<endl;
                 std::cout<<"test 3"<<endl;
