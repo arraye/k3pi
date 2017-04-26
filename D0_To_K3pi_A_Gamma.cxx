@@ -46,6 +46,7 @@
 #include "RooCBShape.h"
 #include "RooPolynomial.h"
 #include "TFitResult.h"
+#include "RooExponential.h"
 
 
 //C++
@@ -100,7 +101,7 @@ DecayTree->SetBranchStatus("D0_ID",1);
 
 //***************Declare observables (Var to plot & vars to cut on)***************
 //D0_M
-double D0_M_Min(1840),D0_M_Max(1900);  //Maximum and minimum values of D0_M to consider
+double D0_M_Min(1830),D0_M_Max(1900);  //Maximum and minimum values of D0_M to consider
 RooRealVar D0_M("D0_M","D0_M",D0_M_Min,D0_M_Max);
 
 //Delta_M Min & Max
@@ -170,43 +171,88 @@ ReducedDataSet.Print() ;
 //*************        PDF Shapes        *************
 //****************************************************
 
+
+
 //************D0 Mass PDF************
 
 // Yields
 RooRealVar sig_D0_M_Yield("sig_D0_M_Yield","sig yield D0_M", 0.9*ReducedDataSet.numEntries(),0,2*ReducedDataSet.numEntries());
 RooRealVar bkg_D0_M_Yield("bkg_D0_M_Yield","bkg yield D0_M", 0.1*ReducedDataSet.numEntries(),0,2*ReducedDataSet.numEntries());
 
+
 // Gaussian signal PDF
-RooRealVar sigmean("sigmean","D^{0} mass",1864.84,1840,1900);
-RooRealVar sigwidth("sigwidth","D^{0} width",2.5,0.,10.);
+RooRealVar sigmean("sigmean","D^{0} mass",1864.84,1840,1890);
+RooRealVar sigwidth("sigwidth","D^{0} width",2.5,0.,30.);
 RooGaussian signal("signal","Signal PDF",D0_M,sigmean,sigwidth);
 
 //Gaussian 2 signal PDF
-RooRealVar sigmean2("sigmean2","D^{0} mass2",1864.84,1840,1900);
-RooRealVar sigwidth2("sigwidth2","D^{0} width2",2.5,0.,10.);
-RooGaussian signal2("signal2","Signal PDF2",D0_M,sigmean2,sigwidth2);
+//RooRealVar sigmean2("sigmean2","D^{0} mass2",1864.84,1840,1900);
+RooRealVar sigwidth2("sigwidth2","D^{0} width2",2.5,0.,30.);
+RooGaussian signal2("signal2","Signal PDF2",D0_M,sigmean,sigwidth2);
 
 // CB signal PDF
-RooRealVar CB_mean("CB_mean","D^{0} mass",1864.84,1840,1900);
+//RooRealVar CB_mean("CB_mean","D^{0} mass",1864.84,1840,1900);
 RooRealVar CB_width("CB_width","D^{0} width",2.5,0.,30.);
 RooRealVar CB_alpha("CB_alpha","CB alpha",2,0,10);
-RooRealVar CB_n("CB_n","CB1 n",4,0.01,10);
-RooCBShape CBall("CBall","Crystall Ball shape",D0_M,CB_mean,CB_width,CB_alpha,CB_n);
+//RooRealVar CB_n("CB_n","CB1 n",4,0.01,10);
+RooRealVar CB_n("CB_n","CB1 n",4,0,10);
+RooCBShape CBall("CBall","Crystall Ball shape",D0_M,sigmean,CB_width,CB_alpha,CB_n);
 
 // Combined signal PDF (gauss1 + gauss2 + CB)
-RooRealVar sigfrac_gauss("sigfrac_gauss","signal fraction of gaussians",0.5,0.5);
+RooRealVar sigfrac_gauss("sigfrac_gauss","signal fraction of gaussians",0.5,0,1);
 RooAddPdf signal_combined_gauss("signal_combined_gauss","signal combined with yields",RooArgList(signal,signal2),RooArgList(sigfrac_gauss));
 
-RooRealVar sigfrac_D0_M("sigfrac_D0_M","signal fraction",0.8,0,1);
+RooRealVar sigfrac_D0_M("sigfrac_D0_M","signal fraction",0.7,0,1);
 RooAddPdf sig_D0_M_PDF("sig_D0_M_PDF","D0_M sig with yields",RooArgList(signal_combined_gauss,CBall),RooArgList(sigfrac_D0_M));
+
+//Combinatorial Background PDF
+//RooRealVar bkgD0_M("bkgD0_M","slope of background", 0, 0, 10, "MeV/c^{2}");
+//RooPolynomial bkg_D0_M_PDF("background_poly", "poly function for background", D0_M, RooArgList(bkgD0_M));
+RooRealVar expo("expo", "expo shape parameter", 2.46085e-03, -5, 5); 
+RooExponential bkg_D0_M_PDF("background_poly", "poly function for background", D0_M, expo);
+
+//Random Pion Background PDF
+//RooProdPdf random_pion_bkg_PDF("random_pion_bkg_PDF","bkgDeltamPdf*sigD0_MPdf",RooArgSet(bkgDeltamPdf,sigD0_MPdf));
+
+//Total D0_M PDF
+RooAddPdf Total_D0_M_PDF("Total_D0_M_PDF","D0_M total",RooArgList(sig_D0_M_PDF,bkg_D0_M_PDF),RooArgList(sig_D0_M_Yield,bkg_D0_M_Yield));
+Total_D0_M_PDF.fitTo(ReducedDataSet, Extended() );
+
+
+
+/*
+// Yields
+RooRealVar sig_D0_M_Yield("sigD0_MYield","sig yield D0_M", 0.5*ReducedDataSet.numEntries(),0,2*ReducedDataSet.numEntries());
+RooRealVar bkg_D0_M_Yield("bkgD0_MYield","bkg yield D0_M", 0.7*ReducedDataSet.numEntries(),0,2*ReducedDataSet.numEntries());
+
+// Gaussian signal PDF
+RooRealVar sigmean("sigmean","D^{0} mass",1864.84,1820,1910);
+RooRealVar sigwidth("sigwidth","D^{0} width",2.5,0.,10.);
+RooGaussian signal("signal","Signal PDF",D0_M,sigmean,sigwidth);
+
+// CB signal PDF
+//RooRealVar CB_mean("CB_mean","D^{0} mass",1865,1820,1910);
+RooRealVar CB_width("CB_width","D^{0} width",2.5,0.,30.);
+RooRealVar CB_alpha("CB_alpha","CB alpha",2,0,10);
+RooRealVar CB_n("CB_n","CB n",4,0.01,10);
+RooCBShape CBall("CBall","Crystall Ball shape",D0_M,sigmean,CB_width,CB_alpha,CB_n);
+
+// Combined signal PDF (gauss + CB)
+RooRealVar sigfrac("sigfrac","signal fraction",0.7,0,1);
+RooAddPdf sig_D0_M_PDF("sigD0_MPdf","D0_M sig with yields",RooArgList(signal,CBall),RooArgList(sigfrac));
 
 //Background PDF
 RooRealVar bkgD0_M("bkgD0_M","slope of background", 0, 0, 10, "MeV/c^{2}");
 RooPolynomial bkg_D0_M_PDF("background_poly", "poly function for background", D0_M, RooArgList(bkgD0_M));
 
-//Total D0_M PDF
-RooAddPdf Total_D0_M_PDF("Total_D0_M_PDF","D0_M total",RooArgList(sig_D0_M_PDF,bkg_D0_M_PDF),RooArgList(sig_D0_M_Yield,bkg_D0_M_Yield));
+//Total PDF
+RooAddPdf Total_D0_M_PDF("totalPdf","D0_M total",RooArgList(sig_D0_M_PDF,bkg_D0_M_PDF),RooArgList(sig_D0_M_Yield,bkg_D0_M_Yield));
+//totalPdf.fitTo(*ReducedDataSet, Extended() );
 Total_D0_M_PDF.fitTo(ReducedDataSet, Extended() );
+*/
+
+
+
 
 
 //************Delta mass PDF************
@@ -265,7 +311,7 @@ TCanvas* D0_M_Canvas = new TCanvas("can2","Mass fits data",800,600);
 
 // Define legend + pads
 TLegend *leg = new TLegend(0.63,0.58,0.90,0.90);
-TLine *l=new TLine(1840.,0.0,1900.,0.0); //horizontal line for a pull plot
+TLine *l=new TLine(D0_M_Min,0.0,D0_M_Max,0.0); //horizontal line for a pull plot
 TPad *pad1 = new TPad("pad1","pad1",0,0.33,1,1);
 TPad *pad2 = new TPad("pad2","pad2",0,0,1,0.33);
 pad1->SetBottomMargin(-0.005);
@@ -364,6 +410,7 @@ float progress_percentage=0;
 cout<<"Creating bin_edges vector..."<<endl;
   for (int iterTau=0;iterTau<(bins*frequency+1);iterTau++)  // so for loop will iterate up to a maximum value of dTau_max
     {
+
 //For percentage display
     progress_percentage=(count_display/count_max)*100;
     cout<<"\r"<<"Current progress: "<<fixed<<setprecision(2)<<progress_percentage<<"%";
@@ -375,11 +422,11 @@ cout<<"Creating bin_edges vector..."<<endl;
     re_s<<current_position;
 
     nEntries=ReducedDataSet.sumEntries(TString(le_s.str())+"<D0_TAU*1000.&&D0_TAU*1000.0<"+TString(re_s.str()));
-    //cout<<TString(le_s.str())+"<D0_TAU*1000.&&D0_TAU*1000.<"+TString(re_s.str())<<" # of entries= "<<nEntries<<endl;  // Calculate how many entries will be in bin (effectively cutting on range D0_TAUs)
+    cout<<TString(le_s.str())+"<D0_TAU*1000.&&D0_TAU*1000.<"+TString(re_s.str())<<" # of entries= "<<nEntries<<endl;  // Calculate how many entries will be in bin (effectively cutting on range D0_TAUs)
    
- //cout<<TString(le_s.str())+"<D0_TAU*1000.&&D0_TAU*1000.<"+TString(re_s.str())<<" # of entries= "<<nEntries<<endl;
+ cout<<TString(le_s.str())+"<D0_TAU*1000.&&D0_TAU*1000.<"+TString(re_s.str())<<" # of entries= "<<nEntries<<endl;
 
-    //std::cout<<"nEntries= "<<nEntries<<" and entryPerBin= "<<entryPerBin<<endl;
+    std::cout<<"nEntries= "<<nEntries<<" and entryPerBin= "<<entryPerBin<<endl;
 
     if (nEntries >= entryPerBin) 
 	    {
@@ -462,15 +509,15 @@ for(i_flavour_iterate=0; i_flavour_iterate < 2; i_flavour_iterate++)
 
        dataInBin.push_back((RooDataSet*) (current_dataset.reduce(RooFit::Cut(TString(betL_s.str())+"< D0_TAU*1000.&&D0_TAU*1000.<="+TString(betR_s.str())))));
 
-       //RooDataSet* tmpDataSet=(RooDataSet*) (dataInBin[i_bin_iterate-1]); // Create a dataset from the data that conforms to above cut (D0_TAU cut) I think for test purposes??!!!
+       RooDataSet* tmpDataSet=(RooDataSet*) (dataInBin[i_bin_iterate-1]); // Create a dataset from the data that conforms to above cut (D0_TAU cut) I think for test purposes??!!!
 
        //Test
-       //cout<<"test: "<<TString(betL_s.str())+"< D0_TAU*1000.&&D0_TAU*1000.<="+TString(betR_s.str())<<"; bin size = "<<tmpDataSet->sumEntries()<<endl;
+       cout<<"test: "<<TString(betL_s.str())+"< D0_TAU*1000.&&D0_TAU*1000.<="+TString(betR_s.str())<<"; bin size = "<<tmpDataSet->sumEntries()<<endl;
 
       //For D0_TAU Plot
        //entries_per_bin.push_back(tmpDataSet->sumEntries());
  cout<<"i_bin_iterate ="<<i_bin_iterate<<endl;
-cout<<"bin_centres[i_bin_iterate] ="<<bin_centres[i_bin_iterate]<<endl;
+cout<<"bin_centres[i_bin_iterate] ="<<bin_centres[i_bin_iterate-1]<<endl;
 
 
      } //end find bin centres
@@ -562,7 +609,7 @@ std::cout<<"end of d0_d0bar iterate"<<endl;
 //*********** Filling & plotting A_Gamma *************
 //****************************************************
 
-    const unsigned int number_of_bins = bin_edges.size();
+    const unsigned int number_of_bins = bin_edges.size()-1;
     cout<<"Number of bins :"<<number_of_bins<<endl;
     double A_Gamma_Value;
     double A_Gamma_For_TGraph[number_of_bins];
@@ -575,6 +622,10 @@ std::cout<<"end of d0_d0bar iterate"<<endl;
     double A_Gamma_Error[number_of_bins];
     double D0_TAU_Error[number_of_bins];
     double sumsq;
+
+for (unsigned int i=0; i<=number_of_bins; i++) {
+cout<<"bin_edges["<<i<<"] = "<<bin_edges[i]<<endl;
+}
 
 
     for (unsigned int A_Gamma_iterate=0; A_Gamma_iterate < number_of_bins; A_Gamma_iterate++)
