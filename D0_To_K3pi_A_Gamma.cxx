@@ -53,6 +53,8 @@
 #include <vector>
 #include <sstream>
 #include <iomanip> //for use of setprecision
+#include <iostream>
+#include <fstream>
 
 //For sleep function
 #include <stdlib.h>
@@ -123,40 +125,21 @@ RooRealVar D0_TAU("D0_TAU","D0_TAU",-500,500);
 
 //***************Create dataset loading D0_M & Various Cut variables***************
 
-
-
-//Make cuts on data and create 3 datasets; Full, D0 only and D0_Bar only
-TCut piplus1_P_Cut = "piplus1_P > 3000"; 
-TCut piplus1_PT_Cut = "piplus1_PT > 350";
-TCut Trigger_Selection_1 = "(D0_L0HadronDecision_TOS == 1) || (lab0_L0Global_TIS == 1)";
-TCut Trigger_Selection_2 = "lab0_Hlt2CharmHadD02HHHHDecision_TOS == 1";
-TCut Trigger_Selection_3 = "D0_Hlt1TrackAllL0Decision_TOS == 1";
-TCut Lab0_M_D0_M = "((lab0_M - D0_M) > 139.57) && ((lab0_M - D0_M) < 155)";
-TCut D0_Data = "D0_ID>0";
-TCut D0_bar_Data = "D0_ID<0";
-
-/*
-RooDataSetReducedDataSet = (RooDataSet*)FullDataSet.reduce(piplus1_P_Cut);
-RooDataSetReducedDataSet = (RooDataSet*)ReducedDataSet.reduce(piplus1_PT_Cut);
-RooDataSetReducedDataSet = (RooDataSet*)ReducedDataSet.reduce(Trigger_Selection_1);
-RooDataSetReducedDataSet = (RooDataSet*)ReducedDataSet.reduce(Trigger_Selection_2);
-RooDataSetReducedDataSet = (RooDataSet*)ReducedDataSet.reduce(Trigger_Selection_3);
-RooDataSetReducedDataSet = (RooDataSet*)ReducedDataSet.reduce(Lab0_M_D0_M);
-
-RooDataSet* D0_DataSet = (RooDataSet*)ReducedDataSet.reduce(D0_Data);
-RooDataSet* D0_Bar_DataSet = (RooDataSet*)ReducedDataSet.reduce(D0_bar_Data);
-*/
-
-  // D0 dataset
- // RooArgSet D0_ArgSet(D0_M,lab0_M,D0_TAU,D0_L0HadronDecision_TOS,lab0_L0Global_TIS,lab0_Hlt2CharmHadD02HHHHDecision_TOS,D0_Hlt1TrackAllL0Decision_TOS,piplus1_P,piplus1_PT);
-  //D0_ArgSet.add(D0_ID);
-
-  RooArgSet data_ArgSet(D0_M,lab0_M,D0_TAU,D0_L0HadronDecision_TOS,lab0_L0Global_TIS,lab0_Hlt2CharmHadD02HHHHDecision_TOS,D0_Hlt1TrackAllL0Decision_TOS,piplus1_P,piplus1_PT);
+  RooArgSet full_data_ArgSet(D0_M,lab0_M,D0_TAU,D0_L0HadronDecision_TOS,lab0_L0Global_TIS,lab0_Hlt2CharmHadD02HHHHDecision_TOS,D0_Hlt1TrackAllL0Decision_TOS,piplus1_P,piplus1_PT);
+  full_data_ArgSet.add(D0_ID);
+RooArgSet data_ArgSet(D0_M,lab0_M,D0_TAU,D0_L0HadronDecision_TOS,lab0_L0Global_TIS,lab0_Hlt2CharmHadD02HHHHDecision_TOS,D0_Hlt1TrackAllL0Decision_TOS,piplus1_P,piplus1_PT);
   data_ArgSet.add(D0_ID);
   RooArgSet D0_ArgSet(D0_M,lab0_M,D0_TAU,D0_L0HadronDecision_TOS,lab0_L0Global_TIS,lab0_Hlt2CharmHadD02HHHHDecision_TOS,D0_Hlt1TrackAllL0Decision_TOS,piplus1_P,piplus1_PT);
   D0_ArgSet.add(D0_ID);
   RooArgSet D0_Bar_ArgSet(D0_M,lab0_M,D0_TAU,D0_L0HadronDecision_TOS,lab0_L0Global_TIS,lab0_Hlt2CharmHadD02HHHHDecision_TOS,D0_Hlt1TrackAllL0Decision_TOS,piplus1_P,piplus1_PT);
   D0_Bar_ArgSet.add(D0_ID);
+
+
+//Is it possible to create argset of cuts ???
+
+
+RooDataSet FullDataSet("FullDataSet","FullDataSet",full_data_ArgSet,Import (*DecayTree));
+
 
 RooDataSet ReducedDataSet("ReducedDataSet","ReducedDataSet",data_ArgSet,Import (*DecayTree),Cut("(D0_L0HadronDecision_TOS||lab0_L0Global_TIS)&&lab0_Hlt2CharmHadD02HHHHDecision_TOS&&D0_Hlt1TrackAllL0Decision_TOS&&(piplus1_P>3000)&&(piplus1_PT>350)&&((lab0_M-D0_M)>139.57)&&((lab0_M-D0_M)<155)"));
 
@@ -165,6 +148,29 @@ ReducedDataSet.Print() ;
   RooDataSet D0_DataSet("D0_DataSet","D0_DataSet",D0_ArgSet,Import(*DecayTree),Cut("(D0_ID>0)&&(D0_L0HadronDecision_TOS||lab0_L0Global_TIS)&&lab0_Hlt2CharmHadD02HHHHDecision_TOS&&D0_Hlt1TrackAllL0Decision_TOS&&(piplus1_P>3000)&&(piplus1_PT>350)&&((lab0_M-D0_M)>139.57)&&((lab0_M-D0_M)<155)"));
 
  RooDataSet D0_Bar_DataSet("D0_Bar_DataSet","D0_Bar_DataSet",D0_Bar_ArgSet,Import(*DecayTree),Cut("(D0_ID<0)&&(D0_L0HadronDecision_TOS||lab0_L0Global_TIS)&&lab0_Hlt2CharmHadD02HHHHDecision_TOS&&D0_Hlt1TrackAllL0Decision_TOS&&(piplus1_P>3000)&&(piplus1_PT>350)&&((lab0_M-D0_M)>139.57)&&((lab0_M-D0_M)<155)"));
+
+
+//Output Number of entries data
+//For information on cuts
+ofstream myfile;
+myfile.open("entry_information.txt");
+myfile<<"====NUMBER OF ENTRIES====="<<endl;
+myfile<<"FullDataSet # Entries = "<<FullDataSet.sumEntries()<<endl;
+myfile<<"DataSet after piplus1_P_Cut: "<<FullDataSet.sumEntries("piplus1_P>3000")<<endl;
+myfile<<"DataSet after piplus1_PT_Cut: "<<FullDataSet.sumEntries("piplus1_PT > 350")<<endl;
+myfile<<"DataSet after D0_L0Hadron_Global cuts: "<<FullDataSet.sumEntries("(D0_L0HadronDecision_TOS == 1) || (lab0_L0Global_TIS == 1)")<<endl;
+myfile<<"DataSet after D0_Hlt1TrackAllL0Decision_TOS == 1: "<<FullDataSet.sumEntries("D0_Hlt1TrackAllL0Decision_TOS == 1")<<endl;
+myfile<<"DataSet after D0* cut: "<<FullDataSet.sumEntries("((lab0_M - D0_M) > 139.57) && ((lab0_M - D0_M) < 155)")<<endl;
+myfile<<"D0: "<<FullDataSet.sumEntries("D0_ID>0")<<endl;
+myfile<<"D0_Bar: "<<FullDataSet.sumEntries("D0_ID<0")<<endl;
+myfile<<"=========================="<<endl;
+myfile<<"After all cuts: "<<endl;
+myfile<<"No. of entries: "<<ReducedDataSet.sumEntries()<<endl;
+myfile<<"D0 entries: "<<D0_DataSet.sumEntries()<<endl;
+myfile<<"D0 bar entries: "<<D0_Bar_DataSet.sumEntries()<<endl;
+myfile<<"=========================="<<endl;
+myfile.close();
+
 
 
 //****************************************************
@@ -206,10 +212,10 @@ RooRealVar sigfrac_D0_M("sigfrac_D0_M","signal fraction",0.7,0,1);
 RooAddPdf sig_D0_M_PDF("sig_D0_M_PDF","D0_M sig with yields",RooArgList(signal_combined_gauss,CBall),RooArgList(sigfrac_D0_M));
 
 //Combinatorial Background PDF
-//RooRealVar bkgD0_M("bkgD0_M","slope of background", 0, 0, 10, "MeV/c^{2}");
-//RooPolynomial bkg_D0_M_PDF("background_poly", "poly function for background", D0_M, RooArgList(bkgD0_M));
-RooRealVar expo("expo", "expo shape parameter", 2.46085e-03, -5, 5); 
-RooExponential bkg_D0_M_PDF("background_poly", "poly function for background", D0_M, expo);
+RooRealVar bkgD0_M("bkgD0_M","slope of background", 0, 0, 10, "MeV/c^{2}");
+RooPolynomial bkg_D0_M_PDF("background_poly", "poly function for background", D0_M, RooArgList(bkgD0_M));
+//RooRealVar expo("expo", "expo shape parameter", 2.46085e-03, -5, 5); 
+//RooExponential bkg_D0_M_PDF("background_poly", "poly function for background", D0_M, expo);
 
 //Random Pion Background PDF
 //RooProdPdf random_pion_bkg_PDF("random_pion_bkg_PDF","bkgDeltamPdf*sigD0_MPdf",RooArgSet(bkgDeltamPdf,sigD0_MPdf));
@@ -325,7 +331,7 @@ pad2->Draw();
 //Create D0_M Plot
 
 RooPlot* D0_M_Frame = D0_M.frame(100) ;
-D0_M_Frame->SetTitle("Plot");
+D0_M_Frame->SetTitle("D^{0} Invariant Mass");
 D0_M_Frame->GetXaxis()->SetTitle("m(D^{0}) (MeV/c^{2})");
 ReducedDataSet.plotOn(D0_M_Frame);
 Total_D0_M_PDF.paramOn(D0_M_Frame, Format("NELU",AutoPrecision(2)),Layout(0.1,0.4,0.9)); //Display fit parameters
@@ -360,7 +366,7 @@ D0_M_Canvas->cd();
 D0_M_Canvas->SaveAs("Plots/LAUREN_D0_M.pdf");
 
 
-
+/*
 //************Plot Delta Mass Plot************
 
 
@@ -370,6 +376,75 @@ D0_M_Canvas->SaveAs("Plots/LAUREN_D0_M.pdf");
   Delta_M_PDF.plotOn(Delta_M_Only_Plot) ;
   Delta_M_Only_Plot->Draw() ;
   canvas_time_int.SaveAs("Plots/LAUREN_DELTA_M.pdf") ;
+*/
+
+//************Delta Mass Canvas****************
+
+//************Plot Delta Mass Plot************
+
+//Create canvas
+TCanvas* Delta_M_Canvas = new TCanvas("Delta_M_Canvas","Delta_M_Canvas",800,600);
+
+// Define legend + pads
+TLegend *deltamleg = new TLegend(0.63,0.58,0.90,0.90);
+TLine *deltaml=new TLine(Delta_M_Min,0.0,Delta_M_Max,0.0); //horizontal line for a pull plot
+TPad *deltampad1 = new TPad("pad1","pad1",0,0.33,1,1);
+TPad *deltampad2 = new TPad("pad2","pad2",0,0,1,0.33);
+deltampad1->SetBottomMargin(-0.005);
+deltampad1->SetBorderMode(0);
+deltampad2->SetTopMargin(-0.02);
+deltampad2->SetBottomMargin(0.1);
+deltampad2->SetBorderMode(0);
+deltampad1->Draw();
+deltampad2->Draw();
+
+//Create D0_M Plot
+
+RooPlot* Delta_M_Frame = Total_Delta_M->frame(100) ;
+Delta_M_Frame->SetTitle("Delta Mass Plot");
+Delta_M_Frame->GetXaxis()->SetTitle("#Delta Mass (MeV/c^{2})");
+ReducedDataSet.plotOn(Delta_M_Frame);
+
+Delta_M_PDF.plotOn(Delta_M_Frame, Components(bkg_Delta_M_PDF), LineColor(kGreen),LineStyle(kDashed)); //Plot background
+Delta_M_PDF.plotOn(Delta_M_Frame, Components(sig_Delta_M_PDF), LineColor(kBlue),LineStyle(kDashed)); //Plot signal
+Delta_M_PDF.plotOn(Delta_M_Frame, LineColor(kBlue)); //Plot total PDF on frame D0_M_Frame
+
+//Plot D0_M_Frame on pad1
+deltampad1->cd(); //Makes pad1 the active pad
+Delta_M_Frame->Draw();
+//Set up legend
+deltamleg->SetFillColor(kWhite);
+deltamleg->SetTextSize(0.04);
+deltamleg->SetTextColor(kBlack);
+//leg->SetHeader("D^{0} Delta Mass");
+deltamleg->AddEntry("h_data", "Data", "lep");
+deltamleg->AddEntry("Delta_M_PDF_Norm[Total_Delta_M]","Total Fitting function PDF", "l");
+deltamleg->AddEntry("Delta_M_PDF_Norm[Total_Delta_M]_Comp[bkg_Delta_M_PDF]","Background PDF","l");
+deltamleg->AddEntry("Delta_M_PDF_Norm[Total_Delta_M]_Comp[sig_Delta_M_PDF]","Signal PDF","l");
+deltamleg->Draw();
+
+//Create residuals plot and plot on pad2
+RooHist* delta_m_pull_hist=Delta_M_Frame->pullHist(); //residHist but normalised wrt error
+RooPlot* delta_m_pull_frame = Total_Delta_M->frame(Title("Pull Distribution"));
+delta_m_pull_frame->addPlotable(delta_m_pull_hist,"P");
+deltampad2->cd();
+delta_m_pull_frame->Draw();
+deltaml->SetLineColor(kRed);
+deltaml->Draw("same");
+
+Delta_M_Canvas->cd();
+Delta_M_Canvas->SaveAs("Plots/LAUREN_Delta_M.pdf");
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -410,23 +485,23 @@ float progress_percentage=0;
 cout<<"Creating bin_edges vector..."<<endl;
   for (int iterTau=0;iterTau<(bins*frequency+1);iterTau++)  // so for loop will iterate up to a maximum value of dTau_max
     {
-
+/*
 //For percentage display
     progress_percentage=(count_display/count_max)*100;
     cout<<"\r"<<"Current progress: "<<fixed<<setprecision(2)<<progress_percentage<<"%";
     count_display++;
- 
+ */
 
     current_position=iterTau*dTau;
     re_s.str(std::string());re_s.clear();  //Clear previous value of right edge
     re_s<<current_position;
 
     nEntries=ReducedDataSet.sumEntries(TString(le_s.str())+"<D0_TAU*1000.&&D0_TAU*1000.0<"+TString(re_s.str()));
-    cout<<TString(le_s.str())+"<D0_TAU*1000.&&D0_TAU*1000.<"+TString(re_s.str())<<" # of entries= "<<nEntries<<endl;  // Calculate how many entries will be in bin (effectively cutting on range D0_TAUs)
+    //cout<<TString(le_s.str())+"<D0_TAU*1000.&&D0_TAU*1000.<"+TString(re_s.str())<<" # of entries= "<<nEntries<<endl;  // Calculate how many entries will be in bin (effectively cutting on range D0_TAUs)
    
- cout<<TString(le_s.str())+"<D0_TAU*1000.&&D0_TAU*1000.<"+TString(re_s.str())<<" # of entries= "<<nEntries<<endl;
+ //cout<<TString(le_s.str())+"<D0_TAU*1000.&&D0_TAU*1000.<"+TString(re_s.str())<<" # of entries= "<<nEntries<<endl;
 
-    std::cout<<"nEntries= "<<nEntries<<" and entryPerBin= "<<entryPerBin<<endl;
+    //std::cout<<"nEntries= "<<nEntries<<" and entryPerBin= "<<entryPerBin<<endl;
 
     if (nEntries >= entryPerBin) 
 	    {
@@ -610,6 +685,7 @@ std::cout<<"end of d0_d0bar iterate"<<endl;
 //****************************************************
 
     const unsigned int number_of_bins = bin_edges.size()-1;
+//const unsigned int number_of_bins = bins ???
     cout<<"Number of bins :"<<number_of_bins<<endl;
     double A_Gamma_Value;
     double A_Gamma_For_TGraph[number_of_bins];
@@ -654,7 +730,7 @@ A_Gamma_Value = numerator/denominator; }
         D0_TAU_Error[A_Gamma_iterate] = 0.;
       }      
 
-	TCanvas A_Gamma_Canvas = new TCanvas("A_Gamma_Canvas","Simple A_Gamma plot",200,10,700,500);
+	TCanvas A_Gamma_Canvas ("A_Gamma_Canvas","Simple A_{CP} plot",200,10,700,500);
 	A_Gamma_Canvas.cd();
 	A_Gamma_Canvas.Update();
 	A_Gamma_Canvas.SetGrid();
@@ -664,11 +740,12 @@ A_Gamma_Value = numerator/denominator; }
 	//TGraph *A_Gamma_Graph = new TGraph(number_of_bins,bin_centres_for_TGraph,A_Gamma_For_TGraph);
         TGraphErrors *A_Gamma_Graph = new TGraphErrors(number_of_bins,bin_centres_for_TGraph,A_Gamma_For_TGraph,D0_TAU_Error,A_Gamma_Error);
 
-	A_Gamma_Canvas.SetTitle("A_{#Gamma} vs #tau_{D^{0}}");
+	A_Gamma_Canvas.SetTitle("A_{#Gamma} vs t_{D^{0}}");
+        A_Gamma_Graph->SetTitle("A_{CP} vs t_{D^{0}}");
 	A_Gamma_Graph->SetMarkerColor(4);
 	A_Gamma_Graph->SetMarkerStyle(21);
 	A_Gamma_Graph->GetXaxis()->SetLimits(0.,7.);
-	A_Gamma_Graph->GetXaxis()->SetTitle("#tau_{D^{0}} #times 1000 [ps]");
+	A_Gamma_Graph->GetXaxis()->SetTitle("t_{D^{0}} #times 1000 [ps]");
 	A_Gamma_Graph->GetXaxis()->CenterTitle();
 	A_Gamma_Graph->GetYaxis()->SetTitle("A_{CP}");
 	A_Gamma_Graph->GetYaxis()->CenterTitle();
@@ -680,15 +757,13 @@ A_Gamma_Value = numerator/denominator; }
         //Linear fit
           TF1 fit_AG("fit_AG", "[0]+[1]*x/[2]", 0, 6);
 	  fit_AG.SetParameters(0,0);
-	  fit_AG.FixParameter(2,0.4101);
+	  fit_AG.FixParameter(2,0.4101); //Average D0 lifetime 
         A_Gamma_Graph->Fit(&fit_AG);
   A_Gamma_Graph->PaintStats(&fit_AG);
   TFitResultPtr r2 = A_Gamma_Graph->Fit("fit_AG", "S");
   r2->Print("V");
 
 	A_Gamma_Canvas.SaveAs("Plots/A_Gamma.pdf");
-
-
 
 
 } 
