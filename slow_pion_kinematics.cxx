@@ -93,8 +93,8 @@ int slow_pion_kinematics(int entries=0)
   DecayTree->SetBranchStatus("piplus1_PZ",1); 
 
   //Objects for holding each branch object
-  Double_t px,py,pz;
-  Int_t qs;
+  Double_t px,py,pz; //Momenta of slow pion
+  Int_t qs;  //Sign of slow pion
 
   //Point branch to objects - allows for reference to
   DecayTree->SetBranchAddress("piplus1_ID",&qs);
@@ -105,16 +105,24 @@ int slow_pion_kinematics(int entries=0)
 
   //Plot histogram px vs py (for developing)
   Int_t nentries = (Int_t)DecayTree->GetEntries();
-  TH2F *hpxpy = new TH2F("hpxpy","py vs px",100,-3000,3000,100,-3000,3000);
-  TH1F *k_dist = new TH1F("k_dist","distribution of variable k",100,-0.001,0.02);
+  TH2F *hpzpy = new TH2F("hpzpy","py vs pz",100,0,20000,100,-2000,2000);
+  TH1F *k_dist = new TH1F("k_dist","distribution of variable k",100,-0.001,0.01);
 
   TH1F *theta_x_dist = new TH1F("theta_x_dist","distribution of variable theta_x",100,-0.4,0.4);
 
-  TH2F *kinematics = new TH2F("kinematics","qs_theta_x vs k",100,-200,200,100,0,0.02);
+  TH2F *kinematicspos = new TH2F("kinematicspos","qs_theta_x vs k",100,-0.31,0.31,100,0,1);
+  TH2F *kinematicsneg = new TH2F("kinematicsneg","qs_theta_x vs k",100,-0.31,0.31,100,0,1);
 
   double k;
   double theta_x;
   double qs_theta_x;
+  int sign;
+
+  //Debug!
+  for(Int_t i=0;i<3;i++){
+    DecayTree->GetEntry(i);
+    cout<<"px: "<<px<<" py: "<<py<<" pz: "<<pz<<endl;
+    }
 
   //Loop through DecayTree and fill histograms
   for (Int_t i=0;i<nentries;i++) {
@@ -123,20 +131,43 @@ int slow_pion_kinematics(int entries=0)
   
      DecayTree->GetEntry(i);
      //hpxpy->Fill(piplus1_PX,piplus1_PY);
-     hpxpy->Fill(px,py);
-     //k = (piplus1_PX*piplus1_PX + piplus1_PY*piplus1_PY);
-     k = 1/sqrt((px*px + py*py));
+     //hpzpy->Fill(pz,py);
+
+     //k (or C for curvature) = 1/sqrt(px^2+pz^2)
+     //pz and px in MeV, convert to GeV (for compliance with D0->hh binned)
+     //Add to k_dist histogram for each event
+     k = (1/(sqrt(px/1000*px/1000 + pz/1000*pz/1000)));
      k_dist->Fill(k);
-     //k_dist->Draw();
+
+     //theta_x = arc
      theta_x = TMath::ATan(px/pz);
      theta_x_dist->Fill(theta_x);
   
-     qs_theta_x = qs * theta_x;
-     kinematics->Fill(qs_theta_x,k);
+     if (qs>0){sign=+1;} else{sign=-1;}
+     qs_theta_x = sign * theta_x;
+
+     //let's look at only +ve soft pion distr. first
+     if (sign==-1){
+     //cout<<"debug: sign is neg? sign = "<<sign<<endl;
+     kinematicsneg->Fill(qs_theta_x,k);}
+     else{
+     kinematicspos->Fill(qs_theta_x,k);}
 }
 
-kinematics->Draw();
-  
+TCanvas* kinposcanvas = new TCanvas("kinposcanvas","Positive soft pion kinematics canvas",800,600);
+kinposcanvas->cd();
+kinematicspos->Draw("colz");
+
+TCanvas* kinnegcanvas = new TCanvas("kinnegcanvas","Positive soft pion kinematics canvas",800,600);
+kinnegcanvas->cd();
+kinematicsneg->Draw("colz");
+
+//TCanvas* kcanvas = new TCanvas("kcanvas","Positive soft pion kinematics canvas",800,600);
+//kcanvas->cd();
+//k_dist->Draw("colz");
+
+
+ //hpzpy->Draw("colz"); 
   
 
 
