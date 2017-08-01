@@ -13,6 +13,7 @@
 #include "TH1F.h"
 #include "TH1D.h"
 #include "TH2D.h"
+#include "TH3D.h"
 #include "TAxis.h"
 #include "TRandom.h"
 #include "TCanvas.h"
@@ -66,12 +67,26 @@
 //For sleep function
 #include <stdlib.h>
 
+#include <libgen.h>
+
 using namespace RooFit;
 
 int slow_pion_kinematics(int entries=0) 
 {
+
+
+//std::string rootfiles[4][2] = {{"md_11","data/run1/charm_magdown_2011.root"},{"mu_11","data/run1/charm_magup_2011.root"},{"md_12","data/run1/DVntuple119.root"},{"mu_12","data/run1/charm_magup_2012.root"}}
+
+std::string rootfiles[1][2]={"full_run_2011","/nfs/lhcb/malexander01/charm/4pi/data/full-run-I/full_2011_data.root"};
+
+for (int filen=0; filen<1; filen++) {
+
   //Open ntuple
-  TFile * file = TFile::Open("/nfs/lhcb/malexander01/charm/4pi/data/full-run-I/full_2011_data.root");
+  //TString filepath = "/nfs/lhcb/malexander01/charm/4pi/data/full-run-I/full_2011_data.root";
+  TString filepath = rootfiles[filen][1];
+  TFile * file = TFile::Open(filepath);
+
+
 
   //Define tree
   TTree* DecayTree = dynamic_cast<TTree*>(file->Get("Dst2010ToD0ToKpipipipiTuple/DecayTree"));
@@ -112,6 +127,10 @@ int slow_pion_kinematics(int entries=0)
 
   TH2F *kinematicspos = new TH2F("kinematicspos","qs_theta_x vs k",100,-0.31,0.31,100,0,1);
   TH2F *kinematicsneg = new TH2F("kinematicsneg","qs_theta_x vs k",100,-0.31,0.31,100,0,1);
+  //TH2F *kinematicsratio = new TH2F("kinematicsneg","qs_theta_x vs k",100,-0.31,0.31,100,0,1);
+
+  TH3F *kinematics_ratio_3d = new TH3F("kinematics_ratio","qs_theta_x vs k",100,-0.31,0.31,100,0,1,100,0,2);
+  
 
   double k;
   double theta_x;
@@ -144,33 +163,30 @@ int slow_pion_kinematics(int entries=0)
      theta_x_dist->Fill(theta_x);
   
      if (qs>0){sign=+1;} else{sign=-1;}
-     qs_theta_x = sign * theta_x;
-
+     //qs_theta_x = sign * theta_x;
+     qs_theta_x = theta_x;
      //let's look at only +ve soft pion distr. first
      if (sign==-1){
      //cout<<"debug: sign is neg? sign = "<<sign<<endl;
      kinematicsneg->Fill(qs_theta_x,k);}
      else{
      kinematicspos->Fill(qs_theta_x,k);}
+
+     //cout<<"sign: "<<sign<<" theta_x: "<<theta_x<<" qs_theta_x: "<<qs_theta_x<<endl;
 }
 
-TCanvas* kinposcanvas = new TCanvas("kinposcanvas","Positive soft pion kinematics canvas",800,600);
+TCanvas* kinposcanvas = new TCanvas("kinposcanvas","Positive soft pion kinematics canvas",900,600);
 kinposcanvas->cd();
+kinposcanvas->SetLogz();
 kinematicspos->Draw("colz");
 
-TCanvas* kinnegcanvas = new TCanvas("kinnegcanvas","Positive soft pion kinematics canvas",800,600);
+kinposcanvas->SaveAs((rootfiles[filen][0] + "_kinposcanvas.pdf").c_str());
+
+TCanvas* kinnegcanvas = new TCanvas("kinnegcanvas","Positive soft pion kinematics canvas",900,600);
 kinnegcanvas->cd();
 kinematicsneg->Draw("colz");
-
-//TCanvas* kcanvas = new TCanvas("kcanvas","Positive soft pion kinematics canvas",800,600);
-//kcanvas->cd();
-//k_dist->Draw("colz");
+kinnegcanvas->SaveAs((rootfiles[filen][0] + "_kinnegcanvas.pdf").c_str());
 
 
- //hpzpy->Draw("colz"); 
-  
-
-
-
-
+}
 }
